@@ -1,0 +1,18 @@
+airflow_dbt_snowflake:
+  target: dev
+  outputs:
+    dev:
+      type: snowflake
+      account: '{{ env_var(''SNOWFLAKE_ACCOUNT'', ''test'') }}'
+      user: '{{ env_var(''SNOWFLAKE_USER'', ''test'') }}'
+      password: '{{ env_var(''SNOWFLAKE_PASSWORD'', ''test'') }}'
+      role: '{{ env_var(''SNOWFLAKE_ROLE'', ''PUBLIC'') }}'
+      warehouse: '{{ env_var(''SNOWFLAKE_WAREHOUSE'', ''LOCAL'') }}'
+      database: '{{ env_var(''SNOWFLAKE_DATABASE'', ''TEST'') }}'
+      schema: '{{ env_var(''SNOWFLAKE_SCHEMA'', ''PUBLIC'') }}'
+      host: "{{ env_var('SNOWFLAKE_HOST', 'snowflake.localhost.localstack.cloud') }}"
+      port: 443
+      protocol: https
+      threads: 4
+      client_session_keep_alive: false
+      insecure_mode: true
