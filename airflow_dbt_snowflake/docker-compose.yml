@@ -1,0 +1,183 @@
+version: "3.9"
+
+x-snowflake-env: &snowflake-env
+  SNOWFLAKE_ACCOUNT: ${SNOWFLAKE_ACCOUNT:-test}
+  SNOWFLAKE_USER: ${SNOWFLAKE_USER:-test}
+  SNOWFLAKE_PASSWORD: ${SNOWFLAKE_PASSWORD:-test}
+  SNOWFLAKE_ROLE: ${SNOWFLAKE_ROLE:-PUBLIC}
+  SNOWFLAKE_WAREHOUSE: ${SNOWFLAKE_WAREHOUSE:-LOCAL}
+  SNOWFLAKE_DATABASE: ${SNOWFLAKE_DATABASE:-TEST}
+  SNOWFLAKE_SCHEMA: ${SNOWFLAKE_SCHEMA:-PUBLIC}
+  SNOWFLAKE_HOST: ${SNOWFLAKE_HOST:-snowflake.localhost.localstack.cloud}
+  SNOWFLAKE_PORT: ${SNOWFLAKE_PORT:-443}
+  SNOWFLAKE_PROTOCOL: ${SNOWFLAKE_PROTOCOL:-https}
+
+x-localstack-hosts: &localstack-hosts
+  - "snowflake.localhost.localstack.cloud:host-gateway"
+
+x-airflow-env: &airflow-env
+  <<: *snowflake-env
+  AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+  AIRFLOW__CORE__EXECUTOR: CeleryExecutor
+  AIRFLOW__WEBSERVER__EXPOSE_CONFIG: "True"
+  AIRFLOW__WEBSERVER__BASE_URL: http://localhost:8080
+  AIRFLOW__CORE__FERNET_KEY: "dGVzdGluZ19mZXJuZXRfa2V5X2Zvcl9sb2NhbA=="
+  AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "False"
+  AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+  AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@postgres:5432/airflow
+  AIRFLOW__CELERY__BROKER_URL: redis://redis:6379/0
+  DBT_PROJECT_DIR: /opt/airflow/dbt
+  DBT_PROFILES_DIR: /opt/airflow/dbt
+  DBT_PARTIAL_PARSE: "0"
+  DBT_TARGET_PATH: /tmp/dbt_target
+
+x-airflow-image: &airflow-image
+  build:
+    context: ./airflow/docker
+    dockerfile: Dockerfile
+  image: local-airflow-dbt:latest
+
+services:
+  snowflake:
+    image: localstack/snowflake
+    container_name: local-snowflake
+    ports:
+      - "127.0.0.1:4566:4566"
+      - "127.0.0.1:4510-4559:4510-4559"
+      - "127.0.0.1:443:443"
+    environment:
+      <<: *snowflake-env
+      LOCALSTACK_AUTH_TOKEN: ${LOCALSTACK_AUTH_TOKEN}
+      EXTRA_CORS_ALLOWED_ORIGINS: "*"
+      DEBUG: "1"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  dbt:
+    image: ghcr.io/dbt-labs/dbt-snowflake:1.8.3
+    container_name: local-dbt
+    working_dir: /usr/app/dbt
+    entrypoint: ["/bin/sh", "-c", "tail -f /dev/null"]
+    depends_on:
+      snowflake:
+        condition: service_healthy
+    environment:
+      <<: *snowflake-env
+      DBT_PROFILES_DIR: /usr/app/dbt
+    volumes:
+      - ./dbt:/usr/app/dbt
+    extra_hosts: *localstack-hosts
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: local-airflow-postgres
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U airflow"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: local-airflow-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  airflow-scheduler:
+    <<: *airflow-image
+    container_name: local-airflow-scheduler
+    command: bash -c "airflow db upgrade && exec airflow scheduler"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      snowflake:
+        condition: service_healthy
+    environment:
+      <<: *airflow-env
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+      - ./airflow/plugins:/opt/airflow/plugins
+      - ./dbt:/opt/airflow/dbt
+    extra_hosts: *localstack-hosts
+
+  airflow-webserver:
+    <<: *airflow-image
+    container_name: local-airflow-webserver
+    command: bash -c "airflow db upgrade && exec airflow webserver"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      airflow-scheduler:
+        condition: service_started
+    environment:
+      <<: *airflow-env
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+      - ./airflow/plugins:/opt/airflow/plugins
+      - ./dbt:/opt/airflow/dbt
+    extra_hosts: *localstack-hosts
+
+  airflow-worker-1:
+    <<: *airflow-image
+    container_name: local-airflow-worker-1
+    command: airflow celery worker
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      airflow-scheduler:
+        condition: service_started
+    environment:
+      <<: *airflow-env
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+      - ./airflow/plugins:/opt/airflow/plugins
+      - ./dbt:/opt/airflow/dbt
+    extra_hosts: *localstack-hosts
+
+  airflow-worker-2:
+    <<: *airflow-image
+    container_name: local-airflow-worker-2
+    command: airflow celery worker
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      airflow-scheduler:
+        condition: service_started
+    environment:
+      <<: *airflow-env
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+      - ./airflow/plugins:/opt/airflow/plugins
+      - ./dbt:/opt/airflow/dbt
+    extra_hosts: *localstack-hosts
+
+volumes:
+  postgres-data:

@@ -1,0 +1,28 @@
+name: airflow_dbt_snowflake
+version: 1.0.0
+config-version: 2
+
+profile: airflow_dbt_snowflake
+
+model-paths: ["models"]
+macro-paths: ["macros"]
+seed-paths: ["seeds"]
+snapshot-paths: ["snapshots"]
+analysis-paths: ["analysis"]
+test-paths: ["tests"]
+
+docs-paths: ["docs"]
+
+dispatch:
+  - macro_namespace: dbt
+    search_order: ['airflow_dbt_snowflake', 'dbt']
+
+models:
+  airflow_dbt_snowflake:
+    staging:
+      +materialized: view
+    marts:
+      +materialized: table
+    kpis:
+      +materialized: incremental
+      +incremental_strategy: delete+insert
