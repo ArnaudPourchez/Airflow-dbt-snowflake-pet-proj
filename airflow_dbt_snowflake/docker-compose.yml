@@ -21,7 +21,7 @@ x-airflow-env: &airflow-env
   AIRFLOW__CORE__EXECUTOR: CeleryExecutor
   AIRFLOW__WEBSERVER__EXPOSE_CONFIG: "True"
   AIRFLOW__WEBSERVER__BASE_URL: http://localhost:8080
-  AIRFLOW__CORE__FERNET_KEY: "dGVzdGluZ19mZXJuZXRfa2V5X2Zvcl9sb2NhbA=="
+  AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW_FERNET_KEY}
   AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "False"
   AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
   AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@postgres:5432/airflow
