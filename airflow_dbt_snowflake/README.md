@@ -1,5 +1,8 @@
 ## Airflow + dbt + Snowflake Emulator Stack
 
+! Warning ! This setup IS NOT SUITED FOR PRODUCTION. There are defaults user:passwords in the docker-compose.yml and in the configs. DO NOT EXPOSE ANYTHING from this project on the internet ! This is made to have a LOCAL sandbox. 
+AGAIN, DO NOT expose any ports to anything else than localhost.
+
 This scaffold spins up a fully local analytics stack that emulates Snowflake, runs dbt transformations, and orchestrates pipelines with Airflow running in Celery mode (scheduler + 2 workers + Redis + Postgres). Everything runs inside Docker, so no external cloud resources are required.
 
 ### Services
