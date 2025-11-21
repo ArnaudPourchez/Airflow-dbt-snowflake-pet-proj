@@ -13,10 +13,11 @@ The bundled dbt project now models a **video game shop telemetry pipeline**: see
 
 ### Prerequisites
 - Docker Engine + Docker Compose Plugin
-- No network access is required once the container images are present locally.
+- Create a free LocalStack account and save the auth token from there in your .env variables (cf: https://pandeysudhendu.medium.com/localstack-for-snowflake-developing-and-testing-locally-37c55c4cb5d8)
+- You will still need to have an internet access as you have to confirm the license with LocalStack.
 
 ### Environment Variables
-Default values are baked into `docker-compose.yml`, but you can export overrides before running docker-compose:
+Default values are baked into `docker-compose.yml`, but you can export overrides before running docker compose:
 
 ```bash
 export SNOWFLAKE_ACCOUNT=test
@@ -43,6 +44,8 @@ docker compose run --rm dbt dbt build
 ```
 
 ### Airflow tips
+- you will need to first open the shell terminal of the Airflow webserver to create an admin user:
+  `airflow users  create --role Admin --username admin --email admin --firstname admin --lastname admin --password admin`
 - Visit http://localhost:8080 for the Airflow UI.
 - Scheduler and workers start automatically. Scale workers via `docker compose up -d --scale airflow-worker-1=0 --scale airflow-worker-2=3` if you want more parallelism.
 - Follow logs with `docker compose logs -f airflow-scheduler`.
