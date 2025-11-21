@@ -2,8 +2,10 @@
 
 This scaffold spins up a fully local analytics stack that emulates Snowflake, runs dbt transformations, and orchestrates pipelines with Airflow running in Celery mode (scheduler + 2 workers + Redis + Postgres). Everything runs inside Docker, so no external cloud resources are required.
 
+The bundled dbt project now models a **video game shop telemetry pipeline**: seeded events capture players purchasing consumable items (ammo, health kits, lamps, etc.) with session-level timestamps, user levels, quantities, and spend. dbt aggregates the raw events into session facts and daily KPIs so you can experiment with commerce-oriented metrics end-to-end inside LocalStack.
+
 ### Services
-- **LocalStack Snowflake emulator** (`localstack/snowflake:1.3.0`) exposed on `localhost:8083`
+- **LocalStack Snowflake emulator** (`localstack/snowflake:1.3.0`) exposed on `https://snowflake.localhost.localstack.cloud/`
 - **dbt CLI** (`ghcr.io/dbt-labs/dbt-snowflake:1.8.7`) mounted to `./dbt`
 - **Airflow** (custom image with `dbt-snowflake`): scheduler, webserver (`localhost:8080`), and two Celery workers
 - **Airflow metadata DB**: Postgres 15

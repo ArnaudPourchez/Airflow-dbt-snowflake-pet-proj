@@ -1,8 +1,11 @@
-event_id,user_id,session_id,event_type,event_ts
-1,1001,s_1,page_view,2024-01-01T08:00:00
-2,1001,s_1,cta_click,2024-01-01T08:01:00
-3,1002,s_2,page_view,2024-01-01T09:00:00
-4,1003,s_3,page_view,2024-01-02T10:00:00
-5,1003,s_3,video_play,2024-01-02T10:05:00
-6,1002,s_4,page_view,2024-01-03T11:00:00
-7,1002,s_4,signup,2024-01-03T11:02:00
+event_id,user_id,user_level,session_id,session_start_ts,event_ts,action_type,item_name,item_category,quantity,spend_usd
+1,2001,5,session_1,2024-03-01T18:00:00,2024-03-01T18:01:12,purchase,ammo pack,consumable,1,4.99
+2,2001,5,session_1,2024-03-01T18:00:00,2024-03-01T18:02:45,purchase,health kit,consumable,1,6.49
+3,2002,12,session_2,2024-03-02T14:10:00,2024-03-02T14:11:05,view_item,flare launcher,weapon,1,0
+4,2002,12,session_2,2024-03-02T14:10:00,2024-03-02T14:13:27,purchase,ammo pack,consumable,2,9.98
+5,2003,2,session_3,2024-03-02T20:30:00,2024-03-02T20:31:54,purchase,lamp,utility,1,3.75
+6,2004,8,session_4,2024-03-03T09:45:00,2024-03-03T09:47:11,purchase,health kit,consumable,2,12.98
+7,2004,8,session_4,2024-03-03T09:45:00,2024-03-03T09:48:33,purchase,ammo pack,consumable,1,4.99
+8,2005,15,session_5,2024-03-04T22:05:00,2024-03-04T22:07:40,purchase,energy core,utility,1,11.25
+9,2006,3,session_6,2024-03-04T07:15:00,2024-03-04T07:16:12,view_item,health kit,consumable,1,0
+10,2006,3,session_6,2024-03-04T07:15:00,2024-03-04T07:17:55,purchase,lamp,utility,1,3.75
