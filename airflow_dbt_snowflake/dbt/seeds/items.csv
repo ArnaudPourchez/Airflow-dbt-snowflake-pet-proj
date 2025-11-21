@@ -1,0 +1,31 @@
+item_id,item_name,item_type,rarity,shard_price,auric_price
+ITM001,Night Warden Cloak,killer,epic,3500,700
+ITM002,Starlit Lantern,skin,common,4000,800
+ITM003,Bloodvine Outfit,outfit,legendary,5000,1000
+ITM004,Eclipse Mask,charm,epic,2500,500
+ITM005,Verdant Charm,outfit,epic,3000,600
+ITM006,Runic Blade,charm,common,1500,300
+ITM007,Harbinger Wrap,killer,rare,2000,400
+ITM008,Voidstep Boots,charm,legendary,2500,500
+ITM009,Phantom Pack,survivor,common,3500,700
+ITM010,Ashen Halo,outfit,common,3000,600
+ITM011,Hunter Prime,skin,legendary,5000,1000
+ITM012,Specter Vest,charm,legendary,5000,1000
+ITM013,Moonlit Garb,killer,epic,2000,400
+ITM014,Crimson Carapace,killer,legendary,1500,300
+ITM015,Frostfang,skin,rare,3000,600
+ITM016,Wraithborne Hood,charm,common,2000,400
+ITM017,Obsidian Armor,survivor,legendary,2000,400
+ITM018,Lunar Relic,charm,legendary,5000,1000
+ITM019,Solaris Suit,outfit,rare,4000,800
+ITM020,Banshee Veil,survivor,rare,3500,700
+ITM021,Stormbringer,skin,common,1500,300
+ITM022,Aether Charm,charm,legendary,3500,700
+ITM023,Arcane Lattice,charm,rare,5000,1000
+ITM024,Rotwood Outfit,outfit,rare,1500,300
+ITM025,Blight Siphon,survivor,rare,2500,500
+ITM026,Shadow Ember,survivor,epic,5000,1000
+ITM027,Amber Cloak,survivor,legendary,2500,500
+ITM028,Grim Lantern,charm,common,5000,1000
+ITM029,Celestial Edge,outfit,legendary,4000,800
+ITM030,Radiant Wrap,survivor,legendary,4000,800

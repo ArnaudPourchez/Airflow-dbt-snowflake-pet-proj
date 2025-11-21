@@ -27,10 +27,6 @@ select
     distinct_items_viewed,
     items_purchased,
     total_revenue,
-    coalesce(
-        datediff('second', session_start, session_end),
-        extract(epoch from session_end) - extract(epoch from session_start),
-        0
-    ) as session_duration_seconds,
+    coalesce(extract(epoch from (session_end - session_start)), 0) as session_duration_seconds,
     case when items_purchased > 0 then total_revenue / items_purchased else 0 end as avg_item_value
 from sessions

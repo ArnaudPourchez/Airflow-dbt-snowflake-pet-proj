@@ -1,4 +1,4 @@
-"""Airflow DAG that orchestrates dbt commands against the local Snowflake emulator."""
+"""Airflow DAG that orchestrates dbt commands against the local Postgres warehouse."""
 
 from __future__ import annotations
 
@@ -10,16 +10,12 @@ from airflow.operators.bash import BashOperator
 
 
 DEFAULT_ENV = {
-    "SNOWFLAKE_ACCOUNT": os.environ.get("SNOWFLAKE_ACCOUNT", "test"),
-    "SNOWFLAKE_USER": os.environ.get("SNOWFLAKE_USER", "test"),
-    "SNOWFLAKE_PASSWORD": os.environ.get("SNOWFLAKE_PASSWORD", "test"),
-    "SNOWFLAKE_ROLE": os.environ.get("SNOWFLAKE_ROLE", "PUBLIC"),
-    "SNOWFLAKE_WAREHOUSE": os.environ.get("SNOWFLAKE_WAREHOUSE", "LOCAL"),
-    "SNOWFLAKE_DATABASE": os.environ.get("SNOWFLAKE_DATABASE", "TEST"),
-    "SNOWFLAKE_SCHEMA": os.environ.get("SNOWFLAKE_SCHEMA", "PUBLIC"),
-    "SNOWFLAKE_HOST": os.environ.get("SNOWFLAKE_HOST", "snowflake.localhost.localstack.cloud"),
-    "SNOWFLAKE_PORT": os.environ.get("SNOWFLAKE_PORT", "443"),
-    "SNOWFLAKE_PROTOCOL": os.environ.get("SNOWFLAKE_PROTOCOL", "https"),
+    "WAREHOUSE_HOST": os.environ.get("WAREHOUSE_HOST", "analytics-db"),
+    "WAREHOUSE_PORT": os.environ.get("WAREHOUSE_PORT", "5432"),
+    "WAREHOUSE_USER": os.environ.get("WAREHOUSE_USER", "game"),
+    "WAREHOUSE_PASSWORD": os.environ.get("WAREHOUSE_PASSWORD", "gamepass"),
+    "WAREHOUSE_DB": os.environ.get("WAREHOUSE_DB", "game_warehouse"),
+    "WAREHOUSE_SCHEMA": os.environ.get("WAREHOUSE_SCHEMA", "public"),
     "DBT_PROFILES_DIR": os.environ.get("DBT_PROFILES_DIR", "/opt/airflow/dbt"),
     "DBT_PROJECT_DIR": os.environ.get("DBT_PROJECT_DIR", "/opt/airflow/dbt"),
     "DBT_PARTIAL_PARSE": os.environ.get("DBT_PARTIAL_PARSE", "0"),
@@ -45,7 +41,7 @@ with DAG(
     start_date=datetime(2024, 1, 1),
     schedule_interval="0 2 * * *",
     catchup=False,
-    tags=["dbt", "snowflake"],
+    tags=["dbt", "postgres"],
 ) as dag:
     dbt_bootstrap = BashOperator(
         task_id="dbt_bootstrap",

@@ -1,22 +1,15 @@
 version: "3.9"
 
-x-snowflake-env: &snowflake-env
-  SNOWFLAKE_ACCOUNT: ${SNOWFLAKE_ACCOUNT:-test}
-  SNOWFLAKE_USER: ${SNOWFLAKE_USER:-test}
-  SNOWFLAKE_PASSWORD: ${SNOWFLAKE_PASSWORD:-test}
-  SNOWFLAKE_ROLE: ${SNOWFLAKE_ROLE:-PUBLIC}
-  SNOWFLAKE_WAREHOUSE: ${SNOWFLAKE_WAREHOUSE:-LOCAL}
-  SNOWFLAKE_DATABASE: ${SNOWFLAKE_DATABASE:-TEST}
-  SNOWFLAKE_SCHEMA: ${SNOWFLAKE_SCHEMA:-PUBLIC}
-  SNOWFLAKE_HOST: ${SNOWFLAKE_HOST:-snowflake.localhost.localstack.cloud}
-  SNOWFLAKE_PORT: ${SNOWFLAKE_PORT:-443}
-  SNOWFLAKE_PROTOCOL: ${SNOWFLAKE_PROTOCOL:-https}
-
-x-localstack-hosts: &localstack-hosts
-  - "snowflake.localhost.localstack.cloud:host-gateway"
+x-warehouse-env: &warehouse-env
+  WAREHOUSE_HOST: ${WAREHOUSE_HOST:-analytics-db}
+  WAREHOUSE_PORT: ${WAREHOUSE_PORT:-5432}
+  WAREHOUSE_USER: ${WAREHOUSE_USER:-game}
+  WAREHOUSE_PASSWORD: ${WAREHOUSE_PASSWORD:-gamepass}
+  WAREHOUSE_DB: ${WAREHOUSE_DB:-game_warehouse}
+  WAREHOUSE_SCHEMA: ${WAREHOUSE_SCHEMA:-public}
 
 x-airflow-env: &airflow-env
-  <<: *snowflake-env
+  <<: *warehouse-env
   AIRFLOW__CORE__LOAD_EXAMPLES: "False"
   AIRFLOW__CORE__EXECUTOR: CeleryExecutor
   AIRFLOW__WEBSERVER__EXPOSE_CONFIG: "True"
@@ -38,38 +31,36 @@ x-airflow-image: &airflow-image
   image: local-airflow-dbt:latest
 
 services:
-  snowflake:
-    image: localstack/snowflake
-    container_name: local-snowflake
-    ports:
-      - "127.0.0.1:4566:4566"
-      - "127.0.0.1:4510-4559:4510-4559"
-      - "127.0.0.1:443:443"
+  analytics-db:
+    image: postgres:15-alpine
+    container_name: local-analytics-postgres
     environment:
-      <<: *snowflake-env
-      LOCALSTACK_AUTH_TOKEN: ${LOCALSTACK_AUTH_TOKEN}
-      EXTRA_CORS_ALLOWED_ORIGINS: "*"
-      DEBUG: "1"
+      POSTGRES_USER: ${WAREHOUSE_USER:-game}
+      POSTGRES_PASSWORD: ${WAREHOUSE_PASSWORD:-gamepass}
+      POSTGRES_DB: ${WAREHOUSE_DB:-game_warehouse}
+    ports:
+      - "5433:5432"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      test: ["CMD-SHELL", "pg_isready -U ${WAREHOUSE_USER:-game} -d ${WAREHOUSE_DB:-game_warehouse}"]
       interval: 10s
       timeout: 5s
       retries: 10
+    volumes:
+      - analytics-data:/var/lib/postgresql/data
 
   dbt:
-    image: ghcr.io/dbt-labs/dbt-snowflake:1.8.3
+    image: ghcr.io/dbt-labs/dbt-core:latest
     container_name: local-dbt
     working_dir: /usr/app/dbt
     entrypoint: ["/bin/sh", "-c", "tail -f /dev/null"]
     depends_on:
-      snowflake:
+      analytics-db:
         condition: service_healthy
     environment:
-      <<: *snowflake-env
+      <<: *warehouse-env
       DBT_PROFILES_DIR: /usr/app/dbt
     volumes:
       - ./dbt:/usr/app/dbt
-    extra_hosts: *localstack-hosts
 
   postgres:
     image: postgres:15-alpine
@@ -106,7 +97,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      snowflake:
+      analytics-db:
         condition: service_healthy
     environment:
       <<: *airflow-env
@@ -115,7 +106,6 @@ services:
       - ./airflow/logs:/opt/airflow/logs
       - ./airflow/plugins:/opt/airflow/plugins
       - ./dbt:/opt/airflow/dbt
-    extra_hosts: *localstack-hosts
 
   airflow-webserver:
     <<: *airflow-image
@@ -137,7 +127,6 @@ services:
       - ./airflow/logs:/opt/airflow/logs
       - ./airflow/plugins:/opt/airflow/plugins
       - ./dbt:/opt/airflow/dbt
-    extra_hosts: *localstack-hosts
 
   airflow-worker-1:
     <<: *airflow-image
@@ -157,7 +146,6 @@ services:
       - ./airflow/logs:/opt/airflow/logs
       - ./airflow/plugins:/opt/airflow/plugins
       - ./dbt:/opt/airflow/dbt
-    extra_hosts: *localstack-hosts
 
   airflow-worker-2:
     <<: *airflow-image
@@ -177,27 +165,22 @@ services:
       - ./airflow/logs:/opt/airflow/logs
       - ./airflow/plugins:/opt/airflow/plugins
       - ./dbt:/opt/airflow/dbt
-    extra_hosts: *localstack-hosts
 
-  superset:
-    build:
-      context: ./superset
-      dockerfile: Dockerfile
-    image: local-superset:latest
-    container_name: local-superset
+  cloudbeaver:
+    image: dbeaver/cloudbeaver:24.2.3
+    container_name: local-cloudbeaver
     depends_on:
-      - snowflake
+      - analytics-db
     ports:
-      - "8088:8088"
+      - "8978:8978"
     environment:
-      SUPERSET_SECRET_KEY: "local_dev_secret"
-      SUPERSET_ENABLE_PROXY_FIX: "True"
-      SUPERSET_LOAD_EXAMPLES: "no"
-      SUPERSET_EXTRA_PACKAGES: "snowflake-sqlalchemy"
+      CB_SERVER_PORT: 8978
+      CB_ADMIN_NAME: admin
+      CB_ADMIN_PASSWORD: admin
     volumes:
-      - superset-home:/app/superset_home
-    extra_hosts: *localstack-hosts
+      - cloudbeaver-data:/opt/cloudbeaver/workspace
 
 volumes:
   postgres-data:
-  superset-home:
+  cloudbeaver-data:
+  analytics-data:
